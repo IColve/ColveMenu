@@ -6,78 +6,76 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 
-namespace SceneStudio {
-	public class MenuButtonComponent : MonoBehaviour 
+public class MenuButtonComponent : MonoBehaviour 
+{
+	[SerializeField]
+	private GameObject defaultButton;
+	[SerializeField]
+	private GameObject lineObj;
+	[SerializeField]
+	private MenuButtonView menuButtonView;
+	private MenuButtonComponent childView;
+
+	void Start()
 	{
-		[SerializeField]
-		private GameObject defaultButton;
-		[SerializeField]
-		private GameObject lineObj;
-		[SerializeField]
-		private MenuButtonView menuButtonView;
-		private MenuButtonComponent childView;
+		menuButtonView.CloseWindowEvent += DestroyWindow;
+	}
 
-		void Start()
-		{
-			menuButtonView.CloseWindowEvent += DestroyWindow;
-		}
+	public void Init(List<MenuButtonItem> items)
+	{
+		this.gameObject.SetActive(true);
+		items.ForEach(x => CreateButton(x));
+	}
 
-		public void Init(List<MenuButtonItem> items)
-		{
-			this.gameObject.SetActive(true);
-			items.ForEach(x => CreateButton(x));
-		}
-
-		public void CreateButton(MenuButtonItem item)
-		{
-			if(item == null) return;
-			GameObject buttonObj = (GameObject)Instantiate(defaultButton);
-			buttonObj.transform.SetParent(transform);
-			buttonObj.SetActive(true);
-			buttonObj.GetComponent<MenuButton>().onClick.AddListener(() =>
-				{
-					item.GetClick();
-					menuButtonView.CloseWindow();
-				});
-			buttonObj.GetComponent<MenuButton>().action = () =>
+	public void CreateButton(MenuButtonItem item)
+	{
+		if(item == null) return;
+		GameObject buttonObj = (GameObject)Instantiate(defaultButton);
+		buttonObj.transform.SetParent(transform);
+		buttonObj.SetActive(true);
+		buttonObj.GetComponent<MenuButton>().onClick.AddListener(() =>
 			{
-				ClearChild();
-				if(item.GetChilds() != null && item.GetChilds().Count != 0)
-				{
-					GameObject viewObj = menuButtonView.CreateComponent(item, buttonObj.transform);
-					childView = viewObj.GetComponent<MenuButtonComponent>();
-					viewObj.GetComponent<MenuButtonComponent>().SetPostion(new Vector2(buttonObj.GetComponent<RectTransform>().sizeDelta.x, 0));
-				}
-			};
-			buttonObj.GetComponentInChildren<Text>().text = item.actionName;
-			buttonObj.name = item.actionName;
-			if(item.hasLine)
+				item.GetClick();
+				menuButtonView.CloseWindow();
+			});
+		buttonObj.GetComponent<MenuButton>().action = () =>
+		{
+			ClearChild();
+			if(item.GetChilds() != null && item.GetChilds().Count != 0)
 			{
-				GameObject line = (GameObject)Instantiate(lineObj);
-				line.transform.SetParent(transform);
-				line.SetActive(true);
+				GameObject viewObj = menuButtonView.CreateComponent(item, buttonObj.transform);
+				childView = viewObj.GetComponent<MenuButtonComponent>();
+				viewObj.GetComponent<MenuButtonComponent>().SetPostion(new Vector2(buttonObj.GetComponent<RectTransform>().sizeDelta.x, 0));
 			}
-
-		}
-
-		public void ClearChild()
+		};
+		buttonObj.GetComponentInChildren<Text>().text = item.buttonName;
+		buttonObj.name = item.buttonName;
+		if(item.hasLine)
 		{
-			if(childView != null)
-			{
-				childView.ClearChild();
-				childView.DestroyWindow();
-			}	
+			GameObject line = (GameObject)Instantiate(lineObj);
+			line.transform.SetParent(transform);
+			line.SetActive(true);
 		}
 
-		public void DestroyWindow()
-		{
-			menuButtonView.CloseWindowEvent -= DestroyWindow;
-			Destroy(gameObject);
-		}
+	}
 
-		public void SetPostion(Vector2 vec2)
+	public void ClearChild()
+	{
+		if(childView != null)
 		{
-			GetComponent<RectTransform>().anchoredPosition = vec2;
-		}
+			childView.ClearChild();
+			childView.DestroyWindow();
+		}	
+	}
+
+	public void DestroyWindow()
+	{
+		menuButtonView.CloseWindowEvent -= DestroyWindow;
+		Destroy(gameObject);
+	}
+
+	public void SetPostion(Vector2 vec2)
+	{
+		GetComponent<RectTransform>().anchoredPosition = vec2;
 	}
 }
