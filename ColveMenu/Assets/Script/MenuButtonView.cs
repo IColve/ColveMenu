@@ -120,7 +120,7 @@ public class MenuButtonItem
 {
 	public string rootButtonName;
 	public string buttonName;
-	private Func<bool> enableCheckEvent;
+	public Func<bool> enableCheckEvent;
 	public bool hasLine;
 	private UnityEvent buttonEvent;
 	private List<MenuButtonItem> menuButtonList;

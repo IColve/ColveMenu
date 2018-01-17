@@ -56,7 +56,10 @@ public class MenuButtonComponent : MonoBehaviour
 			line.transform.SetParent(transform);
 			line.SetActive(true);
 		}
-
+		if (item.enableCheckEvent != null && !item.enableCheckEvent.Invoke())
+		{
+			buttonObj.GetComponent<MenuButton>().interactable = false;
+		}
 	}
 
 	public void ClearChild()
