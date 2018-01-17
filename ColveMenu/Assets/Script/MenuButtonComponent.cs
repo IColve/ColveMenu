@@ -34,10 +34,10 @@ public class MenuButtonComponent : MonoBehaviour
 		buttonObj.transform.SetParent(transform);
 		buttonObj.SetActive(true);
 		buttonObj.GetComponent<MenuButton>().onClick.AddListener(() =>
-			{
-				item.GetClick();
-				menuButtonView.CloseWindow();
-			});
+		{
+			item.GetClick();
+			menuButtonView.CloseWindow();
+		});
 		buttonObj.GetComponent<MenuButton>().action = () =>
 		{
 			ClearChild();

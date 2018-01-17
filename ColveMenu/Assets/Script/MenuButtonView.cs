@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using System.Linq;
 using System;
-using System.Security.Cryptography.X509Certificates;
 using UnityEngine.UI;
 
 public class MenuButtonView : MonoBehaviour 
@@ -18,8 +17,6 @@ public class MenuButtonView : MonoBehaviour
 	private GameObject defaultButtonView;
 	[SerializeField]
 	private GameObject rootButton;
-
-	private MenuButtonItem rootMenuButtonItem = new MenuButtonItem("Root");
 
 	private List<MenuButtonItem> menuButtonList;
 
@@ -47,9 +44,8 @@ public class MenuButtonView : MonoBehaviour
 			menuButtonList.Add(item);
 			buttonObj.GetComponent<Button>().onClick.AddListener(()=>
 				{
-					return;
 					CloseWindow();
-					MenuButtonItem data = FindMenuButtonItem(item.rootButtonName, item.buttonName);
+					MenuButtonItem data = FindMenuButton(item.buttonName);
 					if(data != null && data.GetChilds() != null && data.GetChilds().Count != 0)
 					{
 						GameObject viewObj = CreateComponent(data, buttonObj.transform);
@@ -59,7 +55,7 @@ public class MenuButtonView : MonoBehaviour
 		}
 		else
 		{
-			MenuButtonItem parentItem = FindMenuButtonItem(item.rootButtonName, item.buttonName);
+			MenuButtonItem parentItem = FindMenuButtonItem(item.rootButtonName, parentName);
 			if(parentItem != null)
 			{
 				parentItem.AddChild(item);
@@ -81,10 +77,15 @@ public class MenuButtonView : MonoBehaviour
 		return viewObj;
 	}
 
+	private MenuButtonItem FindMenuButton(string buttonName)
+	{
+		return menuButtonList.First(x => x.buttonName == buttonName);
+	}
+
 	private MenuButtonItem FindMenuButtonItem(string rootButtonName, string buttonName)
 	{
-		MenuButtonItem menuButton = menuButtonList.First(x => x.buttonName == rootButtonName);
-		return menuButton.buttonName == rootButtonName ? menuButton : FindMenuButtonItem(buttonName, menuButton);
+		MenuButtonItem menuButton = FindMenuButton(rootButtonName);
+		return menuButton.buttonName == rootButtonName && menuButton.buttonName == buttonName ? menuButton : FindMenuButtonItem(buttonName, menuButton);
 	}
 
 	private MenuButtonItem FindMenuButtonItem(string buttonName,MenuButtonItem item = null)

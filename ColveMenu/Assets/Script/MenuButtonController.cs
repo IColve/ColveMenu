@@ -20,18 +20,18 @@ public class MenuButtonController : MonoBehaviour
 		if(menuButtonList != null)
 		{
 			menuButtonList.ForEach(x =>
+			{
+				MenuButtonItem menuButton = new MenuButtonItem(x.buttonName);
+				menuButtonView.Add(menuButton);
+				if (x.menuButtonitemList != null)
 				{
-					MenuButtonItem menuButton = new MenuButtonItem(x.buttonName);
-					menuButtonView.Add(menuButton);
-					if (x.menuButtonitemList != null)
+					x.menuButtonitemList.ForEach(y =>
 					{
-						x.menuButtonitemList.ForEach(y =>
-						{
-							MenuButtonItem menuButtonItem = new MenuButtonItem(y.buttonName, x.buttonName, () => y.buttonEvent.Invoke(), y.hasline);
-							menuButtonView.Add(menuButtonItem, y.parentName);
-						});
-					}
-				});
+						MenuButtonItem menuButtonItem = new MenuButtonItem(y.buttonName, x.buttonName, () => y.buttonEvent.Invoke(), y.hasline);
+						menuButtonView.Add(menuButtonItem, y.parentButtonName);
+					});
+				}
+			});
 		}
 	}
 
@@ -40,9 +40,7 @@ public class MenuButtonController : MonoBehaviour
 [System.Serializable]
 public class EditorMenuButtonItem
 {
-	[System.NonSerialized]
-	public string rootParentName;
-	public string parentName;
+	public string parentButtonName;
 	public string buttonName;
 	public bool hasline;
 	public UnityEvent buttonEvent;
