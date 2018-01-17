@@ -8,151 +8,164 @@ using System.Linq;
 using System;
 using UnityEngine.UI;
 
-namespace SceneStudio {
-	public class MenuButtonView : MonoBehaviour 
+public class MenuButtonView : MonoBehaviour 
+{
+	public delegate void menuButtonView();
+	public event menuButtonView CloseWindowEvent;
+
+	[SerializeField]
+	private GameObject defaultButtonView;
+	[SerializeField]
+	private GameObject rootButton;
+
+	private List<MenuButtonItem> menuButtonList;
+
+	[SerializeField]
+	private GameObject backGround;
+
+	public void Add(MenuButtonItem item,string parentName = null)
 	{
-		public delegate void menuButtonView();
-		public event menuButtonView CloseWindowEvent;
-
-		[SerializeField]
-		private GameObject defaultButtonView;
-		[SerializeField]
-		private GameObject rootButton;
-
-		private MenuButtonItem rootMenuButtonItem = new MenuButtonItem("Root"); 
-
-		[SerializeField]
-		private GameObject backGround;
-
-		public void Add(MenuButtonItem item,string parentName = null)
+		if(string.IsNullOrEmpty(item.rootButtonName))
 		{
-			if(string.IsNullOrEmpty(parentName))
+			if (menuButtonList == null) menuButtonList = new List<MenuButtonItem>();
+			menuButtonList.ForEach(x =>
 			{
-				GameObject buttonObj = (GameObject)Instantiate(rootButton);
-				buttonObj.transform.SetParent(transform);
-				buttonObj.GetComponentInChildren<Text>().text = item.actionName;
-				buttonObj.SetActive(true);
-				buttonObj.name = item.actionName;
-				rootMenuButtonItem.AddChild(item);
-				buttonObj.GetComponent<Button>().onClick.AddListener(()=>
+				if (x.buttonName == item.buttonName)
+				{
+					Debug.Log("菜单父类名称重复");
+					return;
+				}
+			});
+			GameObject buttonObj = (GameObject)Instantiate(rootButton);
+			buttonObj.transform.SetParent(transform);
+			buttonObj.GetComponentInChildren<Text>().text = item.buttonName;
+			buttonObj.SetActive(true);
+			buttonObj.name = item.buttonName;
+			menuButtonList.Add(item);
+			buttonObj.GetComponent<Button>().onClick.AddListener(()=>
+				{
+					CloseWindow();
+					MenuButtonItem data = FindMenuButton(item.buttonName);
+					if(data != null && data.GetChilds() != null && data.GetChilds().Count != 0)
 					{
-						CloseWindow();
-						MenuButtonItem data = Find(item.actionName);
-						if(data != null && data.GetChilds() != null && data.GetChilds().Count != 0)
-						{
-							GameObject viewObj = CreateComponent(data, buttonObj.transform);
-							viewObj.GetComponent<MenuButtonComponent>().SetPostion(new Vector2(0, -buttonObj.GetComponent<RectTransform>().sizeDelta.y));
-						}
-					});
+						GameObject viewObj = CreateComponent(data, buttonObj.transform);
+						viewObj.GetComponent<MenuButtonComponent>().SetPostion(new Vector2(0, -buttonObj.GetComponent<RectTransform>().sizeDelta.y));
+					}
+				});
+		}
+		else
+		{
+			MenuButtonItem parentItem = FindMenuButtonItem(item.rootButtonName, parentName);
+			if(parentItem != null)
+			{
+				parentItem.AddChild(item);
 			}
 			else
 			{
-				MenuButtonItem parentItem = Find(parentName);
-				if(parentItem != null)
-				{
-					parentItem.AddChild(item);
-				}
-				else
-				{
-					Debug.Log(parentName + "失踪");
-				}
+				Debug.Log(parentName + "失踪");
 			}
-		}
-
-		public GameObject CreateComponent(MenuButtonItem data, Transform parent)
-		{
-			backGround.SetActive(true);
-			GameObject viewObj = (GameObject)Instantiate(defaultButtonView);
-			viewObj.transform.SetParent(parent);
-			viewObj.SetActive(true);
-			viewObj.GetComponent<MenuButtonComponent>().Init(data.GetChilds());
-			return viewObj;
-		}
-
-		private MenuButtonItem Find(string name,MenuButtonItem item = null)
-		{
-			if(item == null) item = rootMenuButtonItem;
-			List<MenuButtonItem> itemList = item.GetChilds();
-			if(itemList != null)
-			{
-				for (int i = 0; i < itemList.Count; i++) 
-				{
-					if(itemList[i].actionName == name) return itemList[i];
-				}
-				for (int i = 0; i < itemList.Count; i++) 
-				{
-					if(itemList[i] != null)
-					{
-						MenuButtonItem data = Find(name, itemList[i]);
-						if(data != null) return data;
-					} 
-				}
-			}
-			return null;
-		}
-
-		public void CloseWindow()
-		{
-			if(CloseWindowEvent != null) CloseWindowEvent.Invoke();
-			if(backGround != null) backGround.SetActive(false);
 		}
 	}
 
-	public class MenuButtonItem
+	public GameObject CreateComponent(MenuButtonItem data, Transform parent)
 	{
-		[SerializeField]
-		public string actionName;
+		backGround.SetActive(true);
+		GameObject viewObj = (GameObject)Instantiate(defaultButtonView);
+		viewObj.transform.SetParent(parent);
+		viewObj.SetActive(true);
+		viewObj.GetComponent<MenuButtonComponent>().Init(data.GetChilds());
+		return viewObj;
+	}
 
-		private Func<bool> enableCheckEvent;
+	private MenuButtonItem FindMenuButton(string buttonName)
+	{
+		return menuButtonList.First(x => x.buttonName == buttonName);
+	}
 
-		public bool hasLine;
+	private MenuButtonItem FindMenuButtonItem(string rootButtonName, string buttonName)
+	{
+		MenuButtonItem menuButton = FindMenuButton(rootButtonName);
+		return menuButton.buttonName == rootButtonName && menuButton.buttonName == buttonName ? menuButton : FindMenuButtonItem(buttonName, menuButton);
+	}
 
-		[SerializeField]
-		private UnityEvent buttonEvent;
-		[SerializeField]
-		private List<MenuButtonItem> menuButtonList;
-
-		public List<MenuButtonItem> GetChilds()
+	private MenuButtonItem FindMenuButtonItem(string buttonName,MenuButtonItem item = null)
+	{
+		List<MenuButtonItem> itemList = item.GetChilds();
+		if(itemList != null)
 		{
-			return menuButtonList;
-		}
-
-		public void AddChild(MenuButtonItem item)
-		{
-			if(menuButtonList == null)
+			for (int i = 0; i < itemList.Count; i++) 
 			{
-				menuButtonList = new List<MenuButtonItem>();
+				if(itemList[i].buttonName == buttonName) return itemList[i];
 			}
-			menuButtonList.Add(item); 
-		}
-
-		public void Remove(string actionName)
-		{
-			if(menuButtonList == null)
+			for (int i = 0; i < itemList.Count; i++) 
 			{
-				return;
-			}
-			foreach (var item in menuButtonList.Where(x => x.actionName == actionName)) 
-			{
-				menuButtonList.Remove(item);
+				if(itemList[i] != null)
+				{
+					MenuButtonItem data = FindMenuButtonItem(buttonName, itemList[i]);
+					if(data != null) return data;
+				} 
 			}
 		}
+		return null;
+	}
 
-		public void GetClick()
+	public void CloseWindow()
+	{
+		if(CloseWindowEvent != null) CloseWindowEvent.Invoke();
+		if(backGround != null) backGround.SetActive(false);
+	}
+}
+
+public class MenuButtonItem
+{
+	public string rootButtonName;
+	public string buttonName;
+	private Func<bool> enableCheckEvent;
+	public bool hasLine;
+	private UnityEvent buttonEvent;
+	private List<MenuButtonItem> menuButtonList;
+
+	public List<MenuButtonItem> GetChilds()
+	{
+		return menuButtonList;
+	}
+
+	public void AddChild(MenuButtonItem item)
+	{
+		if(menuButtonList == null)
 		{
-			if(buttonEvent != null) buttonEvent.Invoke();
+			menuButtonList = new List<MenuButtonItem>();
 		}
+		menuButtonList.Add(item); 
+	}
 
-		public MenuButtonItem(string actionName, UnityAction action = null, bool hasline = false, Func<bool> enableCheckEvent = null)
+	public void Remove(string actionName)
+	{
+		if(menuButtonList == null)
 		{
-			this.actionName = actionName;
-			this.enableCheckEvent = enableCheckEvent == null ? () => true : enableCheckEvent;
-			this.buttonEvent = new UnityEvent();
-			this.hasLine = hasline;
-			if(action != null)
-			{
-				this.buttonEvent.AddListener(action);
-			}
+			return;
+		}
+		foreach (var item in menuButtonList.Where(x => x.buttonName == actionName)) 
+		{
+			menuButtonList.Remove(item);
+		}
+	}
+
+	public void GetClick()
+	{
+		if(buttonEvent != null) buttonEvent.Invoke();
+	}
+
+	public MenuButtonItem(string buttonName, string rootButtonName = "", UnityAction action = null, bool hasline = false, Func<bool> enableCheckEvent = null)
+	{
+		this.buttonName = buttonName;
+		this.rootButtonName = rootButtonName;
+		this.enableCheckEvent = enableCheckEvent == null ? () => true : enableCheckEvent;
+		this.buttonEvent = new UnityEvent();
+		this.hasLine = hasline;
+		if(action != null)
+		{
+			this.buttonEvent.AddListener(action);
 		}
 	}
 }

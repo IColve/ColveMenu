@@ -6,46 +6,49 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.Events;
 
-namespace SceneStudio {
-	public class MenuButtonController : MonoBehaviour 
-	{
-		public List<EditorMenuButtonItem> menuButtonList;
-		public List<EditorMenuButtonItem> menuButtonItemList;
-		public MenuButtonView menuButtonView;
+public class MenuButtonController : MonoBehaviour
+{
+	public List<EditorMenuButton> menuButtonList;
+	public MenuButtonView menuButtonView;
 
-		void Start()
+	void Start()
+	{
+		if(menuButtonView == null)
 		{
-			if(menuButtonView == null)
-			{
-				menuButtonView = GameObject.FindObjectOfType<MenuButtonView>();
-			}
-			if(menuButtonList != null)
-			{
-				menuButtonList.ForEach(x =>
-					{
-						MenuButtonItem item = new MenuButtonItem(x.actionName);
-						menuButtonView.Add(item, x.parentName);
-					});
-			}
-			if(menuButtonItemList != null)
-			{
-				menuButtonItemList.ForEach(x => 
-					{
-						MenuButtonItem item = new MenuButtonItem(x.actionName, () => x.buttonEvent.Invoke(), x.hasline);
-						menuButtonView.Add(item, x.parentName);
-					});
-			}
+			menuButtonView = GameObject.FindObjectOfType<MenuButtonView>();
 		}
-
+		if(menuButtonList != null)
+		{
+			menuButtonList.ForEach(x =>
+			{
+				MenuButtonItem menuButton = new MenuButtonItem(x.buttonName);
+				menuButtonView.Add(menuButton);
+				if (x.menuButtonitemList != null)
+				{
+					x.menuButtonitemList.ForEach(y =>
+					{
+						MenuButtonItem menuButtonItem = new MenuButtonItem(y.buttonName, x.buttonName, () => y.buttonEvent.Invoke(), y.hasline);
+						menuButtonView.Add(menuButtonItem, y.parentButtonName);
+					});
+				}
+			});
+		}
 	}
 
+}
 
-	[System.Serializable]
-	public class EditorMenuButtonItem
-	{
-		public string parentName;
-		public string actionName;
-		public bool hasline;
-		public UnityEvent buttonEvent;
-	}
+[System.Serializable]
+public class EditorMenuButtonItem
+{
+	public string parentButtonName;
+	public string buttonName;
+	public bool hasline;
+	public UnityEvent buttonEvent;
+}
+
+[System.Serializable]
+public class EditorMenuButton
+{
+	public string buttonName;
+	public List<EditorMenuButtonItem> menuButtonitemList;
 }
